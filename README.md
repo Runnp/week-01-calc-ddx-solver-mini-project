@@ -1,5 +1,6 @@
 # CalcSolver 🧮
 
+<small>Created by Runnp + Claude</small>
 A desktop app that analyzes screenshots of AP Calculus BC problems and returns exact answers.
 
 ## Vision
