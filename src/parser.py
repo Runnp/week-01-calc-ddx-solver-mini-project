@@ -1,37 +1,83 @@
 """
 parser.py — Image → Problem Text
-Day 1: Stub with Claude Vision API integration placeholder.
-Day 2 goal: Wire up real API call to extract LaTeX/text from screenshot.
+Day 2, Push 1: API key loading + raw Claude Vision call.
 """
 
 import base64
 import os
+import anthropic
+from dotenv import load_dotenv
+
+load_dotenv()
+
+
+def _get_client() -> anthropic.Anthropic:
+    """Create Anthropic client from env variable."""
+    api_key = os.getenv("ANTHROPIC_API_KEY")
+    if not api_key:
+        raise EnvironmentError(
+            "ANTHROPIC_API_KEY not set. Copy .env.example to .env and add your key."
+        )
+    return anthropic.Anthropic(api_key=api_key)
+
+
+def _image_to_base64(image_path: str) -> tuple[str, str]:
+    """Read image file and return (base64_data, media_type)."""
+    ext = image_path.lower().split(".")[-1]
+    media_type_map = {
+        "jpg": "image/jpeg",
+        "jpeg": "image/jpeg",
+        "png": "image/png",
+        "bmp": "image/bmp",
+        "gif": "image/gif",
+        "webp": "image/webp",
+    }
+    media_type = media_type_map.get(ext, "image/png")
+
+    with open(image_path, "rb") as f:
+        b64 = base64.standard_b64encode(f.read()).decode("utf-8")
+
+    return b64, media_type
 
 
 def parse_image(image_path: str) -> str:
     """
-    Takes a screenshot path, returns the detected calculus problem as a string.
-    
-    Currently: returns a placeholder for Day 1 scaffold.
-    Next: Use Claude Vision (or pytesseract) to extract the math expression.
+    Takes a screenshot path, sends it to Claude Vision,
+    and returns the raw response text.
+    Push 1: raw response only — parsing comes in Push 2.
     """
-    # TODO (Day 2): Call Claude API with vision
-    # with open(image_path, "rb") as f:
-    #     b64 = base64.b64encode(f.read()).decode()
-    # response = claude_client.messages.create(
-    #     model="claude-opus-4-5",
-    #     messages=[{
-    #         "role": "user",
-    #         "content": [
-    #             {"type": "image", "source": {"type": "base64", "media_type": "image/png", "data": b64}},
-    #             {"type": "text", "text": "Extract the calculus problem from this image. Return only the math expression."}
-    #         ]
-    #     }]
-    # )
-    # return response.content[0].text
+    client = _get_client()
+    b64, media_type = _image_to_base64(image_path)
 
-    # Day 1 placeholder
-    return f"[Image loaded: {os.path.basename(image_path)}]\nlim(x→0) sin(x)/x"
+    response = client.messages.create(
+        model="claude-sonnet-4-5",
+        max_tokens=1024,
+        messages=[
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "image",
+                        "source": {
+                            "type": "base64",
+                            "media_type": media_type,
+                            "data": b64,
+                        },
+                    },
+                    {
+                        "type": "text",
+                        "text": (
+                            "This is a screenshot of an AP Calculus BC problem. "
+                            "Extract and return the math problem exactly as written. "
+                            "Return only the raw problem text, nothing else."
+                        ),
+                    },
+                ],
+            }
+        ],
+    )
+
+    return response.content[0].text
 
 
 def extract_topic(problem_text: str) -> str:
