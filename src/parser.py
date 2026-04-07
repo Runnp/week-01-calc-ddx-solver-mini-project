@@ -1,10 +1,11 @@
 """
 parser.py — Image → Problem Text
-Day 2, Push 1: API key loading + raw Claude Vision call.
+Day 2, Push 2: Smart extraction — structured response + topic detection.
 """
 
 import base64
 import os
+import re
 import anthropic
 from dotenv import load_dotenv
 
@@ -40,11 +41,28 @@ def _image_to_base64(image_path: str) -> tuple[str, str]:
     return b64, media_type
 
 
+def _clean_expression(raw: str) -> str:
+    """
+    Clean up Claude's response into a solver-friendly expression.
+    Strips markdown, extra whitespace, and explanation text.
+    """
+    raw = re.sub(r"```[a-z]*", "", raw).replace("```", "")
+    lines = raw.strip().splitlines()
+    math_lines = [
+        line for line in lines
+        if line.strip() and not re.match(
+            r"^(find|evaluate|solve|compute|given|note|this|the)\b",
+            line.strip(), re.IGNORECASE
+        )
+    ]
+    return "\n".join(math_lines).strip() if math_lines else raw.strip()
+
+
 def parse_image(image_path: str) -> str:
     """
     Takes a screenshot path, sends it to Claude Vision,
-    and returns the raw response text.
-    Push 1: raw response only — parsing comes in Push 2.
+    and returns a clean extracted math problem string.
+    Push 2: structured prompt + expression cleaning.
     """
     client = _get_client()
     b64, media_type = _image_to_base64(image_path)
@@ -67,9 +85,11 @@ def parse_image(image_path: str) -> str:
                     {
                         "type": "text",
                         "text": (
-                            "This is a screenshot of an AP Calculus BC problem. "
-                            "Extract and return the math problem exactly as written. "
-                            "Return only the raw problem text, nothing else."
+                            "This is a screenshot of an AP Calculus BC problem.\n"
+                            "Extract the math problem and return it in this exact format:\n\n"
+                            "PROBLEM: <the math expression, e.g. lim(x->0) sin(x)/x>\n"
+                            "TOPIC: <one of: limits, derivatives, integrals, series, other>\n\n"
+                            "Use standard math notation. No explanation, no extra text."
                         ),
                     },
                 ],
@@ -77,23 +97,35 @@ def parse_image(image_path: str) -> str:
         ],
     )
 
-    return response.content[0].text
+    raw = response.content[0].text
+    return _parse_structured_response(raw)
+
+
+def _parse_structured_response(raw: str) -> str:
+    """
+    Extract the PROBLEM field from Claude's structured response.
+    Falls back to cleaned raw text if format is not followed.
+    """
+    problem_match = re.search(r"PROBLEM:\s*(.+?)(?:\nTOPIC:|$)", raw, re.DOTALL | re.IGNORECASE)
+    if problem_match:
+        return _clean_expression(problem_match.group(1))
+    return _clean_expression(raw)
 
 
 def extract_topic(problem_text: str) -> str:
     """
     Classify which calculus topic the problem belongs to.
-    Returns one of: limits, derivatives, integrals, series, ...
+    Returns one of: limits, derivatives, integrals, series, unknown.
     """
-    problem_lower = problem_text.lower()
+    p = problem_text.lower()
 
-    if "lim" in problem_lower:
+    if "lim" in p:
         return "limits"
-    elif "d/dx" in problem_lower or "f'(" in problem_lower or "derivative" in problem_lower:
+    elif any(k in p for k in ["d/dx", "f'(", "derivative", "dy/dx", "d^2"]):
         return "derivatives"
-    elif "∫" in problem_lower or "integral" in problem_lower:
+    elif any(k in p for k in ["integral", "antiderivative"]) or "∫" in problem_text:
         return "integrals"
-    elif "series" in problem_lower or "sigma" in problem_lower or "∑" in problem_lower:
+    elif any(k in p for k in ["series", "sigma", "converge", "diverge", "taylor", "maclaurin"]) or "∑" in problem_text:
         return "series"
     else:
         return "unknown"
