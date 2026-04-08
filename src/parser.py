@@ -121,7 +121,7 @@ def extract_topic(problem_text: str) -> str:
 
     if "lim" in p:
         return "limits"
-    elif any(k in p for k in ["d/dx", "f'(", "derivative", "dy/dx", "d^2"]):
+    elif any(k in p for k in ["d/dx", "f'(", "derivative", "dy/dx", "d^2", "d/dt", "dy/dt", "dx/dt", "rate", "implicit"]):
         return "derivatives"
     elif any(k in p for k in ["integral", "antiderivative"]) or "∫" in problem_text:
         return "integrals"
