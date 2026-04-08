@@ -127,5 +127,3 @@ def extract_topic(problem_text: str) -> str:
         return "integrals"
     elif any(k in p for k in ["series", "sigma", "converge", "diverge", "taylor", "maclaurin"]) or "∑" in problem_text:
         return "series"
-    else:
-        return "unknown"
