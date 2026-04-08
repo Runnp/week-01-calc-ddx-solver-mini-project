@@ -1,4 +1,4 @@
-# CalcSolver ∫🧮
+# ∫ CalcSolver 🧮
 
 Created by Runnp + Claude
 
@@ -38,10 +38,12 @@ python src/main.py
 ```
 
 ## Requirements
-- Python 3.10+
+- python 3.10+
 - sympy — symbolic math engine
-- anthropic — Claude Vision API (Day 2)
-- tkinter — built into Python standard library
+- pillow — python imagining library
+- tkinter — built into python standard library
+- anthropic — Claude Vision API
+
 
 ## AP Calculus BC Topics Covered
 1. **Limits** — L'Hôpital's rule, squeeze theorem, continuity
