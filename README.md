@@ -1,4 +1,4 @@
-# CalcSolver 🧮
+# CalcSolver ∫🧮
 
 Created by Runnp + Claude
 
