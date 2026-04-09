@@ -1,11 +1,12 @@
-# ∫ CalcSolver 🧮
+# CalcDdxSolver f'(x) → ∫ f(x) dx
 
 Created by Runnp + Claude
 
-A desktop app that analyzes screenshots of AP Calculus BC problems and returns exact answers.
+A desktop app that analyzes Calculus problems on Differentiation and Integration to return their solutions.
 
 ## Vision
-Upload a photo or screenshot of a handwritten or printed calculus problem → get the exact answer instantly.
+Taking an integral is the most popular and widely used operation in calculus analysis, more frequently than taking the derivative of a function. My goal is to build a tool that would get the exact answer to my problem instantly, being able to implement fundamental theorem of calculus.
+
 
 ## Topics Roadmap
 | Day | Topic | Status |
