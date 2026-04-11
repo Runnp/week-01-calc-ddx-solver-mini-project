@@ -14,7 +14,7 @@ Taking an integral is the most popular and widely used operation in calculus ana
 | 1 | Project scaffold + Limits (SymPy) | ✅ |
 | 2 | Claude Vision API integration (parse images) | ✅ |
 | 3 | Derivatives solver | ✅ |
-| 4 | Implicit differentiation + related rates | 🔲 |
+| 4 | Implicit differentiation + related rates | ✅ |
 | 5 | Integrals (u-sub, by parts) | 🔲 |
 | 6 | FTC + improper integrals | 🔲 |
 | 7 | Series + polish UI | 🔲 |
