@@ -1,5 +1,7 @@
 # CalcDdxSolver f'(x) → ∫ f(x) dx
 
+Created by Runnp + Claude
+
 A desktop app that analyzes Calculus problems on Differentiation and Integration to return their solutions.
 
 ## Vision
