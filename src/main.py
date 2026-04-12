@@ -142,8 +142,15 @@ class CalcSolverApp:
         self.problem_text.insert("end", text)
         self.problem_text.config(state="disabled")
         topic = extract_topic(text)
+        colors = {
+            "limits":      "#00aaff",
+            "derivatives": "#ff9900",
+            "integrals":   "#cc66ff",
+            "series":      "#ff4466",
+        }
         if topic != "unknown":
-            self.topic_label.config(text=f"topic: {topic}")
+            color = colors.get(topic, "#00ff88")
+            self.topic_label.config(text=f"topic: {topic}", fg=color)
 
     def _set_steps(self, steps: list):
         self.steps_text.config(state="normal")
