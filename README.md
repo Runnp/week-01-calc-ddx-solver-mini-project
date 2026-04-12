@@ -7,14 +7,13 @@ A desktop app that analyzes Calculus problems on Differentiation and Integration
 ## Vision
 Taking an integral is the most popular and widely used operation in calculus analysis, more frequently than taking the derivative of a function. My goal is to build a tool that would get the exact answer to my problem instantly, being able to implement fundamental theorem of calculus.
 
-
 ## Topics Roadmap
 | Day | Topic | Status |
 |-----|-------|--------|
 | 1 | Project scaffold + Limits (SymPy) | ✅ |
 | 2 | Claude Vision API integration (parse images) | ✅ |
 | 3 | Derivatives solver | ✅ |
-| 4 | Implicit differentiation + related rates | 🔲 |
+| 4 | Implicit differentiation + related rates | ✅ |
 | 5 | Integrals (u-sub, by parts) | 🔲 |
 | 6 | FTC + improper integrals | 🔲 |
 | 7 | Series + polish UI | 🔲 |
