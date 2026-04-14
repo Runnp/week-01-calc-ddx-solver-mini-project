@@ -191,13 +191,6 @@ class CalcSolverApp:
 
     # ── Push 1: solve from typed input ───────────────────────────────────────
 
-    def _solve_typed(self):
-        problem = self.input_entry.get().strip()
-        if not problem:
-            self._flash_hint()
-            return
-        self._run_solver(problem)
-
     def _flash_hint(self):
         """Briefly highlight the hint to guide the user."""
         self.hint_label.config(fg="#ff4444")
