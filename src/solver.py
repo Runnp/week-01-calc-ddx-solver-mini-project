@@ -738,25 +738,3 @@ def _extract_p_value(text: str):
             pass
     return None
 
-
-def _parse_series_term(text: str):
-    """Parse the nth-term of a series from the problem text."""
-    cleaned = re.sub(
-        r"(series|sum|sigma|∑|converge[s]?|diverge[s]?|ratio test|root test|integral test|geometric|p-series|taylor|maclaurin)",
-        "", text, flags=re.IGNORECASE
-    ).strip()
-
-    cleaned = (cleaned
-        .replace("^", "**")
-        .replace("n!", "factorial(n)")
-        .replace("(n+1)!", "factorial(n+1)")
-        .replace("ln(", "log(")
-        .replace("π", "pi")
-        .replace("∞", "oo")
-    )
-    cleaned = cleaned.split("=")[-1].strip()
-
-    try:
-        return sp.sympify(cleaned, locals={"n": n, "k": k, "x": x})
-    except Exception:
-        return None
