@@ -112,21 +112,3 @@ def parse_image(image_path: str) -> str:
 
     return _normalize_math(best_text)
 
-
-def extract_topic(problem_text: str) -> str:
-    """Classify calculus topic from problem text."""
-    p = problem_text.lower()
-
-    if "lim" in p:
-        return "limits"
-    elif any(k in p for k in ["d/dx", "f'(", "derivative", "dy/dx", "d^2",
-                                "d/dt", "dy/dt", "dx/dt", "rate", "implicit"]):
-        return "derivatives"
-    elif any(k in p for k in ["integral", "antiderivative", "integrate"]) or "∫" in problem_text:
-        return "integrals"
-    elif any(k in p for k in ["series", "sigma", "converge", "diverge", "taylor",
-                                "maclaurin", "ratio test", "root test", "p-series",
-                                "geometric", "expand"]) or "∑" in problem_text:
-        return "series"
-    else:
-        return "unknown"
