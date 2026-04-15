@@ -1,54 +1,66 @@
 # CalcDdxSolver f'(x) → ∫ f(x) dx
 
-Created by Runnp + Claude
+A lightweight local desktop calculator for symbolic calculus.
 
-A desktop app that analyzes Calculus problems on Differentiation and Integration to return their solutions.
+It focuses only on two operations:
 
-## Vision
-Taking an integral is the most popular and widely used operation in calculus analysis, more frequently than taking the derivative of a function. My goal is to build a tool that would get the exact answer to my problem instantly, being able to implement fundamental theorem of calculus.
+- Differentiation
+- Integration
 
-## Topics Roadmap
-| Day | Topic | Status |
-|-----|-------|--------|
-| 1 | Project scaffold + Limits (SymPy) | ✅ |
-| 2 | Claude Vision API integration (parse images) | ✅ |
-| 3 | Derivatives solver | ✅ |
-| 4 | Implicit differentiation + related rates | ✅ |
-| 5 | Integrals (u-sub, by parts) | 🔲 |
-| 6 | FTC + improper integrals | 🔲 |
-| 7 | Series + polish UI | 🔲 |
+The app runs locally with `tkinter` for the desktop UI and `sympy` for symbolic math. There are no API keys, subscriptions, or paid services involved.
 
-## Project Structure
-```
-calculus-solver/
-├── src/
-│   ├── main.py      # GUI window (tkinter)
-│   ├── parser.py    # Screenshot → problem text (Claude Vision)
-│   └── solver.py    # Problem text → answer (SymPy)
-├── tests/
-│   └── sample_problems/   # Test screenshots
-├── requirements.txt
-└── README.md
+## Pipeline
+
+- Accepts manual text input only
+- Computes symbolic derivatives in `x`
+- Computes indefinite integrals in `x`
+- Computes definite integrals such as `integrate 1/(1+x^2) from 0 to 1`
+- Shows a readable plain result and a pretty-printed math view
+
+## Scope
+
+- Supported:
+  - `differentiate x^3*sin(x)`
+  - `d/dx ln(x) + x^2`
+  - `integrate x^2*exp(x)`
+  - `integrate 1/(1+x^2) from 0 to 1`
+
+
+## Structure
+
+```text
+src/
+  main.py    # tkinter desktop UI
+  parser.py  # manual text parsing and request normalization
+  solver.py  # symbolic derivative/integral engine using SymPy
 ```
 
 ## Setup
+
+1. Install dependencies:
+
 ```bash
-pip install -r requirements.txt
+pip install -r Requirements.txt
+```
+
+2. Run the app:
+
+```bash
 python src/main.py
 ```
 
-## Requirements
-- python 3.10+
-- sympy — symbolic math engine
-- pillow — python imagining library
-- tkinter — built into python standard library
-- anthropic — Claude Vision API
+## Input
 
+```text
+differentiate x^4*sin(x)
+differentiate sqrt(x) + ln(x)
+integrate sin(x)
+integrate x^2*exp(x)
+integrate 1/(1+x^2) from 0 to 1
+```
 
-## AP Calculus BC Topics Covered
-1. **Limits** — L'Hôpital's rule, squeeze theorem, continuity
-2. Derivatives (coming)
-3. Integrals (coming)
-4. Differential equations (coming)
-5. Parametric & polar (coming)
-6. Series & sequences (coming)
+## Notes
+
+- Expressions are currently validated for `x`-based calculus only.
+- If SymPy cannot reduce an integral to a closed form, the app keeps the result symbolic instead of pretending it was fully solved.
+- The UI is intentionally small and minimal: input, output, and simple controls.

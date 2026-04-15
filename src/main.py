@@ -20,6 +20,13 @@ EXAMPLES = (
     "integrate x^2*exp(x)",
     "integrate 1/(1+x^2) from 0 to 1",
 )
+STARTER_TEXT = """Type one of these forms:
+
+- differentiate x^3*cos(x)
+- integrate sin(x)
+- integrate 1/(1+x^2) from 0 to 1
+
+Supported input is manual text only, focused on symbolic derivatives and integrals in x."""
 
 
 class CalculusCalculatorApp:
@@ -31,6 +38,7 @@ class CalculusCalculatorApp:
         self.root.configure(bg=WINDOW_BG)
         self._build_style()
         self._build_ui()
+        self.root.bind("<Control-l>", lambda _event: self.clear())
 
     def _build_style(self) -> None:
         style = ttk.Style()
@@ -115,6 +123,7 @@ class CalculusCalculatorApp:
         )
         self.output_text.pack(fill="both", expand=True)
 
+        self._set_output(STARTER_TEXT)
         self.input_entry.focus_set()
 
     def calculate(self) -> None:
@@ -157,7 +166,7 @@ class CalculusCalculatorApp:
     def clear(self) -> None:
         self.input_var.set("")
         self.status_label.config(text="Ready", fg=MUTED)
-        self._set_output("")
+        self._set_output(STARTER_TEXT)
         self.input_entry.focus_set()
 
     def _show_message(self, message: str, *, is_error: bool) -> None:
