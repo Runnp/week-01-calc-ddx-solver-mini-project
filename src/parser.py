@@ -1,114 +1,129 @@
-"""
-parser.py — Image -> Problem Text
-Day 7 fix: Replaced pytesseract with EasyOCR — 100% open source, no external install.
-pip install easyocr
-"""
+"""Manual text parser for the symbolic calculus desktop app."""
 
+from __future__ import annotations
+
+from dataclasses import dataclass
 import re
-from PIL import Image, ImageFilter, ImageEnhance
-
-# Lazy-load EasyOCR so the app starts fast — loaded on first image use
-_reader = None
-
-def _get_reader():
-    global _reader
-    if _reader is None:
-        import easyocr
-        # English only, GPU off — works on any machine
-        _reader = easyocr.Reader(["en"], gpu=False, verbose=False)
-    return _reader
 
 
-def _preprocess_image(image_path: str) -> str:
-    """
-    Preprocess image for better OCR accuracy.
-    Grayscale -> contrast boost -> sharpen -> upscale if small.
-    Returns path to processed temp image.
-    """
-    import tempfile, os
-    img = Image.open(image_path).convert("L")
-
-    w, h = img.size
-    if w < 800:
-        scale = 800 / w
-        img = img.resize((int(w * scale), int(h * scale)), Image.LANCZOS)
-
-    img = ImageEnhance.Contrast(img).enhance(2.5)
-    img = img.filter(ImageFilter.SHARPEN)
-    img = img.filter(ImageFilter.SHARPEN)
-
-    # Save to temp file for EasyOCR
-    tmp = tempfile.NamedTemporaryFile(suffix=".png", delete=False)
-    img.save(tmp.name)
-    return tmp.name
+@dataclass(frozen=True)
+class ParsedRequest:
+    operation: str
+    expression_text: str
+    bounds: tuple[str, str] | None = None
+    variable: str = "x"
+    original_text: str = ""
+    normalized_text: str = ""
 
 
-def _normalize_math(text: str) -> str:
-    """Normalize OCR output into SymPy-friendly math notation."""
+def normalize_input(text: str) -> str:
+    """Convert user input into a SymPy-friendly text form."""
+    cleaned = (text or "").strip()
     replacements = [
-        (r"\bX\b",        "x"),
-        (r"\bY\b",        "y"),
-        (r"×",            "*"),
-        (r"÷",            "/"),
-        (r"²",            "^2"),
-        (r"³",            "^3"),
-        (r"(\d)\s+x",     r"\1*x"),   # 3 x -> 3*x
-        (r"(\d)\s+\(",    r"\1*("),   # 3 ( -> 3*(
-        (r"\bSin\b",      "sin"),
-        (r"\bCos\b",      "cos"),
-        (r"\bTan\b",      "tan"),
-        (r"\bLn\b",       "ln"),
-        (r"\bLog\b",      "log"),
-        (r"\bE\b",        "e"),
-        (r"[—–]",         "-"),
-        (r"\s{2,}",       " "),
+        ("\u2212", "-"),
+        ("\u2013", "-"),
+        ("\u2014", "-"),
+        ("\u00d7", "*"),
+        ("\u00f7", "/"),
+        ("\u222b", "integrate "),
+        ("\u03c0", "pi"),
+        ("\u221e", "oo"),
     ]
-    for pattern, replacement in replacements:
-        text = re.sub(pattern, replacement, text)
-    return text.strip()
+    for old, new in replacements:
+        cleaned = cleaned.replace(old, new)
+
+    cleaned = re.sub(r"\s+", " ", cleaned)
+    cleaned = re.sub(r"\bderivative of\b", "differentiate ", cleaned, flags=re.IGNORECASE)
+    cleaned = re.sub(r"\bintegral of\b", "integrate ", cleaned, flags=re.IGNORECASE)
+    cleaned = re.sub(r"\banti-?derivative of\b", "integrate ", cleaned, flags=re.IGNORECASE)
+    return cleaned.strip()
 
 
-def parse_image(image_path: str) -> str:
-    """
-    Takes a screenshot path, runs EasyOCR, returns cleaned math string.
-    100% open source — no API, no external binary needed.
-    First call downloads the EasyOCR model (~100MB, once only).
-    """
-    import os
-    tmp_path = _preprocess_image(image_path)
+def extract_topic(text: str) -> str:
+    """Detect whether the user asked for a derivative or an integral."""
+    lowered = normalize_input(text).lower()
 
-    try:
-        reader = _get_reader()
-        results = reader.readtext(tmp_path, detail=1, paragraph=False)
-    finally:
-        try:
-            os.unlink(tmp_path)
-        except Exception:
-            pass
+    derivative_markers = (
+        "d/dx",
+        "differentiate",
+        "derivative",
+        "diff",
+    )
+    integral_markers = (
+        "integrate",
+        "integral",
+        "antiderivative",
+    )
 
-    if not results:
-        return ""
+    if any(marker in lowered for marker in derivative_markers):
+        return "derivative"
+    if any(marker in lowered for marker in integral_markers):
+        return "integral"
+    return "unknown"
 
-    # Each result: (bbox, text, confidence)
-    # Pick the line with highest math symbol density
-    lines = [(text, conf) for _, text, conf in results if text.strip()]
 
-    if not lines:
-        return ""
+def parse_request(text: str) -> ParsedRequest:
+    """Split the user's text into operation, expression, and optional bounds."""
+    normalized = normalize_input(text)
+    operation = extract_topic(normalized)
 
-    # Score each line: math symbols weighted by confidence
-    def math_score(line_conf):
-        text, conf = line_conf
-        math_chars = len(re.findall(r"[x\d\+\-\*/\^\(\)=∫∑]", text))
-        return math_chars * conf
+    if operation == "unknown":
+        raise ValueError(
+            "Start with 'differentiate' or 'integrate'. Example: differentiate x^3*sin(x)"
+        )
 
-    best_text = max(lines, key=math_score)[0]
+    bounds = _extract_bounds(normalized) if operation == "integral" else None
+    expression_text = _strip_operation_words(normalized, operation)
+    expression_text = _strip_bounds_text(expression_text)
+    expression_text = _strip_differential_suffix(expression_text)
+    expression_text = expression_text.strip(" ,")
 
-    # If multiple lines detected, join them (handles multi-line problems)
-    if len(lines) > 1:
-        joined = " ".join(t for t, _ in lines)
-        if math_score((joined, 1.0)) > math_score((best_text, 1.0)):
-            best_text = joined
+    if not expression_text:
+        raise ValueError("Enter an expression after the operation.")
 
-    return _normalize_math(best_text)
+    return ParsedRequest(
+        operation=operation,
+        expression_text=expression_text,
+        bounds=bounds,
+        original_text=text,
+        normalized_text=normalized,
+    )
 
+
+def _strip_operation_words(text: str, operation: str) -> str:
+    cleaned = text
+    if operation == "derivative":
+        cleaned = re.sub(r"^\s*d/dx\s*", "", cleaned, flags=re.IGNORECASE)
+        cleaned = re.sub(r"^\s*diff(?:erentiate)?\s*", "", cleaned, flags=re.IGNORECASE)
+        cleaned = re.sub(r"^\s*derivative\s*", "", cleaned, flags=re.IGNORECASE)
+        cleaned = re.sub(r"^\s*of\s+", "", cleaned, flags=re.IGNORECASE)
+    else:
+        cleaned = re.sub(r"^\s*integrate\s*", "", cleaned, flags=re.IGNORECASE)
+        cleaned = re.sub(r"^\s*integral\s*", "", cleaned, flags=re.IGNORECASE)
+        cleaned = re.sub(r"^\s*of\s+", "", cleaned, flags=re.IGNORECASE)
+    return cleaned.strip()
+
+
+def _strip_bounds_text(text: str) -> str:
+    cleaned = re.sub(
+        r"\s+from\s+(.+?)\s+to\s+(.+)$",
+        "",
+        text,
+        flags=re.IGNORECASE,
+    )
+    return cleaned.strip()
+
+
+def _strip_differential_suffix(text: str) -> str:
+    return re.sub(r"\s*d([a-zA-Z])\s*$", "", text).strip()
+
+
+def _extract_bounds(text: str) -> tuple[str, str] | None:
+    match = re.search(r"\bfrom\s+(.+?)\s+to\s+(.+)$", text, flags=re.IGNORECASE)
+    if not match:
+        return None
+    lower = match.group(1).strip()
+    upper = match.group(2).strip()
+    if not lower or not upper:
+        return None
+    return lower, upper
