@@ -16,6 +16,7 @@ from sympy.parsing.sympy_parser import (
 from parser import ParsedRequest, parse_request
 
 x = sp.symbols("x")
+C = sp.Symbol("C")
 TRANSFORMATIONS = standard_transformations + (
     implicit_multiplication_application,
     convert_xor,
@@ -71,6 +72,7 @@ def solve(problem_text: str) -> dict:
     try:
         request = parse_request(problem_text)
         expression = _parse_math_expression(request.expression_text)
+        _validate_supported_symbols(expression)
     except Exception as exc:
         return {
             "error": str(exc),
@@ -114,29 +116,50 @@ def _solve_integral(request: ParsedRequest, expression: sp.Expr) -> SolveResult:
     if request.bounds:
         lower = _parse_math_expression(request.bounds[0])
         upper = _parse_math_expression(request.bounds[1])
+        _validate_supported_symbols(lower)
+        _validate_supported_symbols(upper)
         integral = sp.simplify(sp.integrate(expression, (x, lower, upper)))
         readable = sp.pretty(integral, use_unicode=True)
         steps = [
-            f"Recognized a definite integral in x.",
+            "Recognized a definite integral in x.",
             f"Parsed integrand: {sp.sstr(expression)}",
             f"Used bounds x = {sp.sstr(lower)} to x = {sp.sstr(upper)}.",
-            "Evaluated the integral symbolically.",
         ]
+        if _is_unevaluated_integral(integral):
+            steps.append("SymPy left the definite integral unevaluated.")
+            result_text = f"Integral({sp.sstr(expression)}, (x, {sp.sstr(lower)}, {sp.sstr(upper)}))"
+        else:
+            steps.append("Evaluated the integral symbolically.")
+            result_text = sp.sstr(integral)
         bounds_text = f"from {sp.sstr(lower)} to {sp.sstr(upper)}"
         return SolveResult(
             operation="Definite Integral",
             input_expression=sp.sstr(expression),
-            result_text=sp.sstr(integral),
+            result_text=result_text,
             steps=steps,
             pretty_result=readable,
             bounds_text=bounds_text,
         )
 
     integral = sp.simplify(sp.integrate(expression, x))
-    result_with_constant = integral + sp.Symbol("C")
+    if _is_unevaluated_integral(integral):
+        steps = [
+            "Recognized an indefinite integral in x.",
+            f"Parsed integrand: {sp.sstr(expression)}",
+            "No closed-form antiderivative was found, so the result remains symbolic.",
+        ]
+        return SolveResult(
+            operation="Indefinite Integral",
+            input_expression=sp.sstr(expression),
+            result_text=sp.sstr(integral),
+            steps=steps,
+            pretty_result=sp.pretty(integral, use_unicode=True),
+        )
+
+    result_with_constant = integral + C
     readable = sp.pretty(result_with_constant, use_unicode=True)
     steps = [
-        f"Recognized an indefinite integral in x.",
+        "Recognized an indefinite integral in x.",
         f"Parsed integrand: {sp.sstr(expression)}",
         "Computed an antiderivative and appended the constant of integration.",
     ]
@@ -157,3 +180,16 @@ def _parse_math_expression(expression_text: str) -> sp.Expr:
         evaluate=True,
     )
     return sp.simplify(parsed)
+
+
+def _validate_supported_symbols(expression: sp.Expr) -> None:
+    unsupported = sorted(
+        symbol for symbol in expression.free_symbols if symbol != x
+    )
+    if unsupported:
+        names = ", ".join(sp.sstr(symbol) for symbol in unsupported)
+        raise ValueError(f"Only expressions in x are supported right now. Unsupported symbols: {names}")
+
+
+def _is_unevaluated_integral(expression: sp.Expr) -> bool:
+    return bool(expression.has(sp.Integral))
