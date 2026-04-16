@@ -20,10 +20,10 @@ The app runs locally with `tkinter` for the desktop UI and `sympy` for symbolic 
 ## Scope
 
 - Supported:
-  - `differentiate x^3*sin(x)`
+  - `diff x^3*sin(x)`
   - `d/dx ln(x) + x^2`
-  - `integrate x^2*exp(x)`
-  - `integrate 1/(1+x^2) from 0 to 1`
+  - `int x^2*exp(x)`
+  - `int 1/(1+x^2) from 0 to 1`
 
 
 ## Structure
@@ -52,11 +52,11 @@ python src/main.py
 ## Input
 
 ```text
-differentiate x^4*sin(x)
-differentiate sqrt(x) + ln(x)
-integrate sin(x)
-integrate x^2*exp(x)
-integrate 1/(1+x^2) from 0 to 1
+diff x^4*sin(x)
+diff sqrt(x) + ln(x)
+int sin(x)
+int x^2*exp(x)
+int 1/(1+x^2) from 0 to 1
 ```
 
 ## Notes

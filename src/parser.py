@@ -25,7 +25,7 @@ def normalize_input(text: str) -> str:
         ("\u2014", "-"),
         ("\u00d7", "*"),
         ("\u00f7", "/"),
-        ("\u222b", "integrate "),
+        ("\u222b", "int "),
         ("\u03c0", "pi"),
         ("\u221e", "oo"),
     ]
@@ -33,9 +33,9 @@ def normalize_input(text: str) -> str:
         cleaned = cleaned.replace(old, new)
 
     cleaned = re.sub(r"\s+", " ", cleaned)
-    cleaned = re.sub(r"\bderivative of\b", "differentiate ", cleaned, flags=re.IGNORECASE)
-    cleaned = re.sub(r"\bintegral of\b", "integrate ", cleaned, flags=re.IGNORECASE)
-    cleaned = re.sub(r"\banti-?derivative of\b", "integrate ", cleaned, flags=re.IGNORECASE)
+    cleaned = re.sub(r"\bderivative of\b", "diff ", cleaned, flags=re.IGNORECASE)
+    cleaned = re.sub(r"\bintegral of\b", "int ", cleaned, flags=re.IGNORECASE)
+    cleaned = re.sub(r"\banti-?derivative of\b", "int ", cleaned, flags=re.IGNORECASE)
     return cleaned.strip()
 
 
@@ -53,6 +53,7 @@ def extract_topic(text: str) -> str:
         "integrate",
         "integral",
         "antiderivative",
+        "int",
     )
 
     if any(marker in lowered for marker in derivative_markers):
@@ -69,7 +70,7 @@ def parse_request(text: str) -> ParsedRequest:
 
     if operation == "unknown":
         raise ValueError(
-            "Start with 'differentiate' or 'integrate'. Example: differentiate x^3*sin(x)"
+            "Start with 'diff' or 'int'. Example: diff x^3*sin(x)"
         )
 
     bounds = _extract_bounds(normalized) if operation == "integral" else None
@@ -98,6 +99,7 @@ def _strip_operation_words(text: str, operation: str) -> str:
         cleaned = re.sub(r"^\s*derivative\s*", "", cleaned, flags=re.IGNORECASE)
         cleaned = re.sub(r"^\s*of\s+", "", cleaned, flags=re.IGNORECASE)
     else:
+        cleaned = re.sub(r"^\s*int\s+", "", cleaned, flags=re.IGNORECASE)
         cleaned = re.sub(r"^\s*integrate\s*", "", cleaned, flags=re.IGNORECASE)
         cleaned = re.sub(r"^\s*integral\s*", "", cleaned, flags=re.IGNORECASE)
         cleaned = re.sub(r"^\s*of\s+", "", cleaned, flags=re.IGNORECASE)
