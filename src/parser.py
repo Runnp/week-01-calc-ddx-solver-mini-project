@@ -36,6 +36,9 @@ def normalize_input(text: str) -> str:
     cleaned = re.sub(r"\bderivative of\b", "diff ", cleaned, flags=re.IGNORECASE)
     cleaned = re.sub(r"\bintegral of\b", "int ", cleaned, flags=re.IGNORECASE)
     cleaned = re.sub(r"\banti-?derivative of\b", "int ", cleaned, flags=re.IGNORECASE)
+    cleaned = re.sub(r"\bnatural\s+logarithm\b", "log", cleaned, flags=re.IGNORECASE)
+    cleaned = re.sub(r"\bnatural\s+log\b", "log", cleaned, flags=re.IGNORECASE)
+    cleaned = re.sub(r"\blogarithm\b", "log", cleaned, flags=re.IGNORECASE)
     return cleaned.strip()
 
 

@@ -1,4 +1,4 @@
-# CalcDdxSolver f'(x) → ∫ f(x) dx
+# CalcDdxSolver f'(x) → ∫ f(x) dx 🔴🌸🎀🦩💕🌷
 
 A lightweight local desktop calculator for symbolic calculus.
 

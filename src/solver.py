@@ -75,7 +75,7 @@ def solve(problem_text: str) -> dict:
         _validate_supported_symbols(expression)
     except Exception as exc:
         return {
-            "error": str(exc),
+            "error": _format_error_message(exc, problem_text),
             "steps": [],
         }
 
@@ -119,6 +119,7 @@ def _solve_integral(request: ParsedRequest, expression: sp.Expr) -> SolveResult:
         _validate_supported_symbols(lower)
         _validate_supported_symbols(upper)
         integral = sp.simplify(sp.integrate(expression, (x, lower, upper)))
+        integral = sp.simplify(integral)
         readable = sp.pretty(integral, use_unicode=True)
         steps = [
             "Recognized a definite integral in x.",
@@ -156,7 +157,7 @@ def _solve_integral(request: ParsedRequest, expression: sp.Expr) -> SolveResult:
             pretty_result=sp.pretty(integral, use_unicode=True),
         )
 
-    result_with_constant = integral + C
+    result_with_constant = sp.simplify(integral + C)
     readable = sp.pretty(result_with_constant, use_unicode=True)
     steps = [
         "Recognized an indefinite integral in x.",
@@ -193,3 +194,21 @@ def _validate_supported_symbols(expression: sp.Expr) -> None:
 
 def _is_unevaluated_integral(expression: sp.Expr) -> bool:
     return bool(expression.has(sp.Integral))
+
+
+def _format_error_message(exc: Exception, original_text: str) -> str:
+    message = str(exc)
+    if "Only expressions in x are supported" in message:
+        return f"{message} Use x only, for example: diff x^2 or int sin(x)."
+    if "could not parse" in message.lower() or "syntax" in message.lower():
+        return (
+            "Could not parse your expression. "
+            "Try something like 'diff x^2' or 'int sin(x)'. "
+            "Use 'ln' or 'log' for natural logarithm, and make sure the expression is in x."
+        )
+    if "SympifyError" in message or "Token" in message:
+        return (
+            "There was a parsing error. "
+            "Make sure your expression uses supported functions like sin, cos, exp, log, sqrt, and variable x."
+        )
+    return message
