@@ -103,16 +103,21 @@ class CalculusCalculatorApp:
         integral_frame = tk.Frame(header_panel, bg=HEADER_BG)
         integral_frame.grid(row=0, column=0, sticky="nsw", padx=(0, 14))
 
-        tk.Label(integral_frame, text="∫", bg=HEADER_BG, fg=ACCENT,
-            font=(INTEGRAL_FONT_FAMILY, 50, "normal")).pack(side="left")
+    tk.Label(
+        integral_frame,
+        text="∫",
+        bg=HEADER_BG,
+        fg=ACCENT,
+        font=(INTEGRAL_FONT_FAMILY, 45)
+    ).grid(row=0, column=0, sticky="s")
 
-        tk.Label(
-            integral_frame,
-            text="dx",
-            bg=HEADER_BG,
-            fg=ACCENT,
-            font=(INTEGRAL_FONT_FAMILY, 15, "bold")
-        ).pack(side="left", pady=(0, 0))
+    tk.Label(
+        integral_frame,
+        text="dx",
+        bg=HEADER_BG,
+        fg=ACCENT,
+        font=(INTEGRAL_FONT_FAMILY, 18)
+    ).grid(row=0, column=1, sticky="sw", padx=(0, 0))
         
         header_text = ttk.Frame(header_panel, style="Header.TFrame")
         header_text.grid(row=0, column=1, sticky="nsew")
