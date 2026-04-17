@@ -103,22 +103,14 @@ class CalculusCalculatorApp:
         integral_frame = tk.Frame(header_panel, bg=HEADER_BG)
         integral_frame.grid(row=0, column=0, sticky="nsw", padx=(0, 14))
 
-    tk.Label(
-        integral_frame,
-        text="∫",
-        bg=HEADER_BG,
-        fg=ACCENT,
-        font=(INTEGRAL_FONT_FAMILY, 45)
-    ).grid(row=0, column=0, sticky="s")
-
-    tk.Label(
-        integral_frame,
-        text="dx",
-        bg=HEADER_BG,
-        fg=ACCENT,
-        font=(INTEGRAL_FONT_FAMILY, 18)
-    ).grid(row=0, column=1, sticky="sw", padx=(0, 0))
-        
+        tk.Label(
+            integral_frame,
+            text="∫",
+            bg=HEADER_BG,   
+            fg=ACCENT,
+            font=(INTEGRAL_FONT_FAMILY, 65)
+        ).pack(side="left", pady=(2,0))
+    
         header_text = ttk.Frame(header_panel, style="Header.TFrame")
         header_text.grid(row=0, column=1, sticky="nsew")
         header_text.columnconfigure(0, weight=1)
@@ -252,6 +244,12 @@ class CalculusCalculatorApp:
         self.reset_graph()
         self.input_entry.focus_set()
 
+        self.root.update_idletasks()
+        event = tk.Event()
+        event.widget = content_area
+        event.width = self.root.winfo_width()
+        self._initialize_panes(event)
+        
     def calculate(self) -> None:
         user_input = self.input_var.get().strip()
         if not user_input:
@@ -311,13 +309,24 @@ class CalculusCalculatorApp:
         if self._panes_initialized or event.width <= 0:
             return
 
-        third = max(event.width // 3, 240)
-        try:
-            event.widget.sash_place(0, third, 1)
-            event.widget.sash_place(1, third * 2, 1)
-            self._panes_initialized = True
-        except tk.TclError:
-            pass
+        input_width = 240
+        remaining_width = event.width - input_width
+        if remaining_width > 0:
+            half_remaining = remaining_width // 2
+            try:
+                event.widget.sash_place(0, input_width, 1)
+                event.widget.sash_place(1, input_width + half_remaining, 1)
+                self._panes_initialized = True
+            except tk.TclError:
+                pass
+        else:
+            third = max(event.width // 3, 240)
+            try:
+                event.widget.sash_place(0, third, 1)
+                event.widget.sash_place(1, third * 2, 1)
+                self._panes_initialized = True
+            except tk.TclError:
+                pass
 
     def _load_portrait(self, filename: str, size: tuple[int, int]) -> ImageTk.PhotoImage | None:
         image_path = Path(__file__).resolve().parent.parent / filename
