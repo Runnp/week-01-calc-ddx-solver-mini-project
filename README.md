@@ -62,5 +62,6 @@ int 1/(1+x^2) from 0 to 1
 ## Notes
 
 - Expressions are currently validated for `x`-based calculus only.
-- If SymPy cannot reduce an integral to a closed form, the app keeps the result symbolic instead of pretending it was fully solved.
+- If Symot reduce an integral to a closed form, the app keeps the result symbolic instead of pretending it was fully solved.
 - The UI is intentionally small and minimal: input, output, and simple controls.
+– I need new green cube
